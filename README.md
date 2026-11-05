@@ -58,7 +58,7 @@ As colunas separam o código que implementa o requisito do teste automatizado qu
 - **Pagamento simulado.** O código Pix vem do stub do gateway (`backend/src/stubs/mock_gateway/`), sem integração bancária real. A equipe confirma ou recusa o pagamento pelo painel (ver o [passo a passo](#passo-a-passo-do-zero-à-demonstração)).
 - **Documentação da retirada.** O sistema registra horário, protocolo e responsável. Não emite documento oficial nem integra órgão de trânsito.
 - **Proteção de dados.** O projeto implementa controles técnicos. Bases legais e prazos de retenção exigem validação jurídica antes de uso real.
-- **Ambiente.** A configuração versionada está com `destroy: true`: o pipeline executa a remoção do ambiente (nada fica rodando nem gera custo). Para publicar, configure `destroy: false` antes do `push`, seguindo o [passo a passo](#passo-a-passo-do-zero-à-demonstração). Um workflow verde de remoção não comprova a publicação nem a execução E2E.
+- **Ambiente.** A configuração versionada está com `destroy: false`: cada `push` para `main` publica (ou atualiza) o ambiente na AWS, desde que o bootstrap tenha sido executado. Para remover tudo e parar custos, configure `destroy: true` e faça `push` (ver [Encerrar](#encerrar)). Em um clone novo, sem bootstrap, o workflow de deploy é ignorado, não falha.
 - **Controles de segurança.** Apenas os listados em [Serviços de segurança](#serviços-de-segurança-e-justificativas) estão implementados; os demais estão [documentados, com a justificativa de custo](#controles-de-segurança-não-implementados-apenas-documentados).
 
 ## Arquitetura
@@ -437,6 +437,11 @@ O bootstrap usa dois comandos e o envio do código, cinco de Git, uma única vez
    Se usou um repositório existente que não está vazio, faça `git pull origin main --allow-unrelated-histories` antes do `push`.
 
    Para este projeto, o repositório remoto já existe e está vazio (`https://github.com/Edufreitass/fase5-tech-challenge-soat`). Nesse caso, no passo 6 use `github_criar_repositorio = false`, `github_repositorio = "fase5-tech-challenge-soat"` e, no `git remote add`, a URL acima.
+
+### Problemas comuns no bootstrap
+
+- **`EntityAlreadyExists` (IAM, S3 ou Budgets).** Sobrou algo de uma implantação anterior na mesma conta, porque o estado local do bootstrap (`terraform.tfstate`) foi perdido. Em vez de apagar os recursos, importe-os com blocos `import` temporários (`to = <recurso>`, `id = <identificador>`) em um arquivo `imports_temp.tf`, rode `terraform plan` e `terraform apply` e apague o arquivo. Recursos envolvidos: bucket `revenda-dev-tfstate-<conta>`, budget `revenda-dev-zero-spend`, política `revenda-dev-boundary`, provedor OIDC do GitHub, roles `gha-deploy-dev` e `gha-plan-dev` e suas políticas.
+- **O primeiro `push` não publica nada.** Se o bootstrap ainda não rodou, a variável `AWS_DEPLOY_ROLE_ARN` não existe e os jobs de AWS são ignorados.
 
 ### Acompanhar o deploy
 
