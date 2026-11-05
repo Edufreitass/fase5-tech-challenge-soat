@@ -1,0 +1,49 @@
+{
+  "name": "revenda-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "jest",
+    "test:ci": "jest --ci --coverage",
+    "e2e": "playwright test",
+    "lint": "biome check . --error-on-warnings",
+    "format": "biome format --write .",
+    "typecheck:e2e": "tsc --noEmit -p e2e/tsconfig.json",
+    "check": "npm run lint && npm run typecheck && npm run typecheck:e2e && npm run test:ci -- --runInBand && npm run build",
+    "test:browser": "playwright test --config playwright.local.config.ts"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "4.3.3",
+    "@xyflow/react": "12.12.0",
+    "lucide-react": "1.59.0",
+    "motion": "14.4.0",
+    "qrcode.react": "4.2.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-router": "8.5.0",
+    "tailwindcss": "4.3.3"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "3.1153.0",
+    "@biomejs/biome": "2.6.3",
+    "@playwright/test": "1.64.1",
+    "@swc/core": "1.16.18",
+    "@swc/jest": "0.2.39",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "14.6.8",
+    "@types/jest": "30.0.0",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "jest": "30.5.2",
+    "jest-environment-jsdom": "30.5.2",
+    "otplib": "13.5.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.4"
+  }
+}

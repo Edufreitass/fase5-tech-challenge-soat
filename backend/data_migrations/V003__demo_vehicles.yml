@@ -1,0 +1,249 @@
+versao: 3
+descricao: Veiculos de demonstracao (dados ficticios)
+operacoes:
+  - operacao: veiculos.cadastrar
+    itens:
+      - marca: "Volkswagen"
+        modelo: "T-Cross Highline 250 TSI"
+        anoFabricacao: 2023
+        anoModelo: 2024
+        cor: "Cinza Platinum"
+        preco: "129900.00"
+        quilometragem: 18500
+        placa: "DEM1A01"
+        renavam: "09000079190"
+        chassi: "9BXDMK01A00000370"
+        combustivel: FLEX
+        cambio: AUTOMATICO
+        descricao: "Unico dono."
+      - marca: "Volkswagen"
+        modelo: "Polo Track 1.0"
+        anoFabricacao: 2022
+        anoModelo: 2022
+        cor: "Branco Cristal"
+        preco: "69900.00"
+        quilometragem: 31200
+        placa: "DEM2A02"
+        renavam: "09000158384"
+        chassi: "9BXDMK02A00000740"
+        combustivel: FLEX
+        cambio: MANUAL
+      - marca: "Volkswagen"
+        modelo: "Nivus Highline 200 TSI"
+        anoFabricacao: 2022
+        anoModelo: 2023
+        cor: "Preto Ninja"
+        preco: "112500.00"
+        quilometragem: 24000
+        placa: "DEM3A03"
+        renavam: "09000237578"
+        chassi: "9BXDMK03A00001110"
+        combustivel: FLEX
+        cambio: AUTOMATICO
+      - marca: "Fiat"
+        modelo: "Argo Drive 1.0"
+        anoFabricacao: 2021
+        anoModelo: 2022
+        cor: "Vermelho Alpine"
+        preco: "58900.00"
+        quilometragem: 42000
+        placa: "DEM4A04"
+        renavam: "09000316761"
+        chassi: "9BXDMK04A00001480"
+        combustivel: FLEX
+        cambio: MANUAL
+      - marca: "Fiat"
+        modelo: "Mobi Like 1.0"
+        anoFabricacao: 2020
+        anoModelo: 2021
+        cor: "Prata Bari"
+        preco: "42900.00"
+        quilometragem: 58000
+        placa: "DEM5A05"
+        renavam: "09000395955"
+        chassi: "9BXDMK05A00001850"
+        combustivel: FLEX
+        cambio: MANUAL
+        descricao: "Revisoes em dia."
+      - marca: "Fiat"
+        modelo: "Toro Freedom 1.8"
+        anoFabricacao: 2021
+        anoModelo: 2021
+        cor: "Cinza Grafite"
+        preco: "119900.00"
+        quilometragem: 47000
+        placa: "DEM6A06"
+        renavam: "09000475142"
+        chassi: "9BXDMK06A00002220"
+        combustivel: FLEX
+        cambio: AUTOMATICO
+      - marca: "Chevrolet"
+        modelo: "Onix LT 1.0 Turbo"
+        anoFabricacao: 2023
+        anoModelo: 2023
+        cor: "Branco Summit"
+        preco: "87900.00"
+        quilometragem: 15800
+        placa: "DEM7A07"
+        renavam: "09000554336"
+        chassi: "9BXDMK07A00002590"
+        combustivel: FLEX
+        cambio: AUTOMATICO
+      - marca: "Chevrolet"
+        modelo: "Tracker Premier 1.2 Turbo"
+        anoFabricacao: 2022
+        anoModelo: 2023
+        cor: "Azul Seal"
+        preco: "124900.00"
+        quilometragem: 29000
+        placa: "DEM8A08"
+        renavam: "09000633520"
+        chassi: "9BXDMK08A00002960"
+        combustivel: FLEX
+        cambio: AUTOMATICO
+      - marca: "Chevrolet"
+        modelo: "S10 LTZ 2.8 Diesel"
+        anoFabricacao: 2020
+        anoModelo: 2020
+        cor: "Preto Ouro Negro"
+        preco: "189900.00"
+        quilometragem: 76000
+        placa: "DEM9A09"
+        renavam: "09000712713"
+        chassi: "9BXDMK09A00003330"
+        combustivel: DIESEL
+        cambio: AUTOMATICO
+        descricao: "4x4."
+      - marca: "Toyota"
+        modelo: "Corolla XEi 2.0"
+        anoFabricacao: 2022
+        anoModelo: 2022
+        cor: "Prata Metalico"
+        preco: "139900.00"
+        quilometragem: 33000
+        placa: "DEM0B10"
+        renavam: "09000791907"
+        chassi: "9BXDMK10A00003700"
+        combustivel: FLEX
+        cambio: CVT
+      - marca: "Toyota"
+        modelo: "Hilux SRV 2.8 Diesel"
+        anoFabricacao: 2021
+        anoModelo: 2022
+        cor: "Branco Super"
+        preco: "259900.00"
+        quilometragem: 52000
+        placa: "DEM1B11"
+        renavam: "09000871099"
+        chassi: "9BXDMK11A00004070"
+        combustivel: DIESEL
+        cambio: AUTOMATICO
+      - marca: "Toyota"
+        modelo: "Yaris XL 1.5"
+        anoFabricacao: 2021
+        anoModelo: 2021
+        cor: "Vermelho Atomic"
+        preco: "79900.00"
+        quilometragem: 39000
+        placa: "DEM2B12"
+        renavam: "09000950282"
+        chassi: "9BXDMK12A00004440"
+        combustivel: FLEX
+        cambio: CVT
+      - marca: "Honda"
+        modelo: "Civic Touring 1.5 Turbo"
+        anoFabricacao: 2020
+        anoModelo: 2020
+        cor: "Cinza Polimetal"
+        preco: "134900.00"
+        quilometragem: 61000
+        placa: "DEM3B13"
+        renavam: "09001029472"
+        chassi: "9BXDMK13A00004810"
+        combustivel: GASOLINA
+        cambio: CVT
+      - marca: "Honda"
+        modelo: "HR-V EXL 1.8"
+        anoFabricacao: 2022
+        anoModelo: 2022
+        cor: "Branco Taffetta"
+        preco: "132900.00"
+        quilometragem: 27500
+        placa: "DEM4B14"
+        renavam: "09001108666"
+        chassi: "9BXDMK14A00005180"
+        combustivel: FLEX
+        cambio: CVT
+      - marca: "Honda"
+        modelo: "Fit EX 1.5"
+        anoFabricacao: 2019
+        anoModelo: 2019
+        cor: "Preto Cristal"
+        preco: "64900.00"
+        quilometragem: 69000
+        placa: "DEM5B15"
+        renavam: "09001187850"
+        chassi: "9BXDMK15A00005550"
+        combustivel: FLEX
+        cambio: CVT
+      - marca: "Hyundai"
+        modelo: "HB20 Comfort 1.0"
+        anoFabricacao: 2022
+        anoModelo: 2023
+        cor: "Prata Sleek"
+        preco: "66900.00"
+        quilometragem: 28000
+        placa: "DEM6B16"
+        renavam: "09001267047"
+        chassi: "9BXDMK16A00005920"
+        combustivel: FLEX
+        cambio: MANUAL
+      - marca: "Hyundai"
+        modelo: "Creta Limited 1.0 Turbo"
+        anoFabricacao: 2023
+        anoModelo: 2024
+        cor: "Branco Polar"
+        preco: "139900.00"
+        quilometragem: 12000
+        placa: "DEM7B17"
+        renavam: "09001346230"
+        chassi: "9BXDMK17A00006290"
+        combustivel: FLEX
+        cambio: AUTOMATICO
+      - marca: "Renault"
+        modelo: "Kwid Zen 1.0"
+        anoFabricacao: 2021
+        anoModelo: 2022
+        cor: "Laranja Atacama"
+        preco: "41900.00"
+        quilometragem: 36000
+        placa: "DEM8B18"
+        renavam: "09001425424"
+        chassi: "9BXDMK18A00006660"
+        combustivel: FLEX
+        cambio: MANUAL
+      - marca: "Renault"
+        modelo: "Duster Iconic 1.6"
+        anoFabricacao: 2022
+        anoModelo: 2022
+        cor: "Cinza Cassiopee"
+        preco: "92900.00"
+        quilometragem: 31000
+        placa: "DEM9B19"
+        renavam: "09001504618"
+        chassi: "9BXDMK19A00007030"
+        combustivel: FLEX
+        cambio: CVT
+      - marca: "BYD"
+        modelo: "Dolphin EV"
+        anoFabricacao: 2024
+        anoModelo: 2024
+        cor: "Azul Surf"
+        preco: "149800.00"
+        quilometragem: 5200
+        placa: "DEM0C20"
+        renavam: "09001583801"
+        chassi: "9BXDMK20A00007400"
+        combustivel: ELETRICO
+        cambio: AUTOMATICO
+        descricao: "Carregador incluso."

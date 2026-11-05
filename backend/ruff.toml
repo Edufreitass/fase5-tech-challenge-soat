@@ -1,0 +1,15 @@
+extend = "../pyproject.toml"
+
+# PEP 8 permite ate 99 colunas quando a equipe adota esse limite.
+line-length = 99
+
+[lint]
+extend-select = ["E501", "W505"]
+ignore = []
+
+[lint.per-file-ignores]
+"src/**/adapters/api/handler.py" = ["PLR0913", "PLR0917"]
+"tests/**" = ["S101", "PLR2004", "S105", "S106", "RUF028", "PLC0415", "F811", "PLR0913", "PLR0917", "RUF059"]
+
+[lint.pycodestyle]
+max-doc-length = 72

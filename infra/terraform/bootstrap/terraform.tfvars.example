@@ -1,0 +1,18 @@
+# Copie para terraform.tfvars (ignorado pelo Git) e preencha com os seus valores.
+# NUNCA versione o terraform.tfvars: ele contem e-mails e o token do GitHub.
+
+admin_email   = "dono-da-loja@exemplo.com"   # recebe o convite do primeiro administrador
+alertas_email = "alertas@exemplo.com"        # recebe alarmes e o alerta de orcamento
+
+aws_profile = "meu-perfil"                   # perfil do AWS CLI (aws configure --profile)
+
+# Obtenha com `gh auth token` e NAO escreva aqui se preferir exportar a variavel:
+#   export TF_VAR_github_token="$(gh auth token)"
+# github_token = "..."
+
+github_owner       = "seu-usuario-github"
+github_repositorio = "fase5-tech-challenge-soat"
+
+# true cria o repositorio; false usa um repositorio que ja existe e esta vazio.
+github_criar_repositorio = false
+github_visibilidade      = "private"         # ou "public"

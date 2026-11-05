@@ -1,0 +1,3990 @@
+{
+  "openapi": "3.1.2",
+  "info": {
+    "title": "API da Plataforma de Revenda de Veículos",
+    "version": "1.0.0",
+    "summary": "API REST da plataforma de revenda de veículos.",
+    "description": "Contrato HTTP organizado por contextos de domínio: Clientes, Veículos, Vendas e Administração. Os contextos colaboram por casos de uso e eventos; detalhes de persistência e provedores externos permanecem internos. Erros seguem o formato application/problem+json. Os domínios OAuth2 de exemplo neste arquivo são substituídos pelos domínios configurados na documentação em execução."
+  },
+  "servers": [
+    {
+      "url": "/v1"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Administração",
+      "description": "Contexto de suporte à operação: funcionários, auditoria, solicitações LGPD, segredos e reprocessamento de fluxos."
+    },
+    {
+      "name": "Clientes",
+      "description": "Contexto responsável pelo perfil, consentimentos, proteção e direitos dos titulares."
+    },
+    {
+      "name": "Simulador de pagamentos",
+      "description": "Integração simulada para desenvolvimento e demonstração do fluxo de pagamentos."
+    },
+    {
+      "name": "Gestão de veículos",
+      "description": "Visão operacional dos anúncios, restrita aos funcionários autorizados."
+    },
+    {
+      "name": "Veículos",
+      "description": "Contexto do catálogo e do ciclo de vida dos anúncios de veículos."
+    },
+    {
+      "name": "Vendas",
+      "description": "Contexto de compra, reserva, pagamento, desistência e retirada do veículo."
+    }
+  ],
+  "paths": {
+    "/_simulacao/pagamentos/cobrancas": {
+      "post": {
+        "tags": [
+          "Simulador de pagamentos"
+        ],
+        "summary": "Criar cobrança simulada",
+        "operationId": "criar_cobranca__simulacao_pagamentos_cobrancas_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CobrancaEntrada"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Operação concluída com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "awsSigV4": []
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/_simulacao/pagamentos/cobrancas/{transacao_id}/cancelar": {
+      "post": {
+        "tags": [
+          "Simulador de pagamentos"
+        ],
+        "summary": "Cancelar cobrança simulada",
+        "operationId": "cancelar__simulacao_pagamentos_cobrancas__transacao_id__cancelar_post",
+        "parameters": [
+          {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Transacao Id"
+            },
+            "name": "transacao_id",
+            "in": "path",
+            "description": "Identificador do recurso no contexto de domínio."
+          }
+        ],
+        "responses": {
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Operação concluída com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "awsSigV4": []
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/_simulacao/pagamentos/cobrancas/{transacao_id}/simular": {
+      "post": {
+        "tags": [
+          "Simulador de pagamentos"
+        ],
+        "summary": "Simular pagamento",
+        "operationId": "simular__simulacao_pagamentos_cobrancas__transacao_id__simular_post",
+        "parameters": [
+          {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Transacao Id"
+            },
+            "name": "transacao_id",
+            "in": "path",
+            "description": "Identificador do recurso no contexto de domínio."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulacaoEntrada"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Solicitação aceita para processamento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthFuncionarios": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/_simulacao/pagamentos/estornos": {
+      "post": {
+        "tags": [
+          "Simulador de pagamentos"
+        ],
+        "summary": "Solicitar estorno simulado",
+        "operationId": "estornar__simulacao_pagamentos_estornos_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EstornoEntrada"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Operação concluída com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "awsSigV4": []
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/administracao/auditoria": {
+      "get": {
+        "tags": [
+          "Administração"
+        ],
+        "summary": "Consultar a trilha de auditoria (janela de até 31 dias)",
+        "operationId": "auditoria_administracao_auditoria_get",
+        "parameters": [
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 64
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Clienteid"
+            },
+            "name": "clienteId",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 64
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Atorid"
+            },
+            "name": "atorId",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 64
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Acao"
+            },
+            "name": "acao",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "De"
+            },
+            "name": "de",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Ate"
+            },
+            "name": "ate",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            },
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Nexttoken"
+            },
+            "name": "nextToken",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Operação concluída com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthFuncionarios": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/administracao/chaves-pii/rotacao": {
+      "post": {
+        "tags": [
+          "Administração"
+        ],
+        "summary": "Rotacionar a chave de proteção de dados pessoais",
+        "operationId": "rotacionar_chave_pii_administracao_chaves_pii_rotacao_post",
+        "responses": {
+          "202": {
+            "description": "Solicitação aceita para processamento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "integer"
+                  },
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthFuncionarios": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/administracao/funcionarios": {
+      "get": {
+        "tags": [
+          "Administração"
+        ],
+        "summary": "Listar funcionários",
+        "operationId": "listar_funcionarios_administracao_funcionarios_get",
+        "parameters": [
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/GrupoFuncionario"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Grupo"
+            },
+            "name": "grupo",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            },
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Nexttoken"
+            },
+            "name": "nextToken",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Operação concluída com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthFuncionarios": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      },
+      "post": {
+        "tags": [
+          "Administração"
+        ],
+        "summary": "Convidar funcionário",
+        "operationId": "criar_funcionario_administracao_funcionarios_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NovoFuncionario"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Recurso criado com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthFuncionarios": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/administracao/funcionarios/{funcionario_id}": {
+      "patch": {
+        "tags": [
+          "Administração"
+        ],
+        "summary": "Atualizar grupo ou situação do funcionário",
+        "operationId": "atualizar_funcionario_administracao_funcionarios__funcionario_id__patch",
+        "parameters": [
+          {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Funcionario Id"
+            },
+            "name": "funcionario_id",
+            "in": "path",
+            "description": "Identificador do recurso no contexto de domínio."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AtualizacaoFuncionario"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Operação concluída com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthFuncionarios": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/administracao/sagas": {
+      "get": {
+        "tags": [
+          "Administração"
+        ],
+        "summary": "Listar execuções de fluxos por situação",
+        "operationId": "listar_sagas_administracao_sagas_get",
+        "parameters": [
+          {
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Status",
+              "default": "FAILED"
+            },
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            },
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Nexttoken"
+            },
+            "name": "nextToken",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Operação concluída com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthFuncionarios": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/administracao/segredos/webhook/rotacao": {
+      "post": {
+        "tags": [
+          "Administração"
+        ],
+        "summary": "Rotacionar o segredo HMAC do webhook",
+        "operationId": "rotacionar_webhook_administracao_segredos_webhook_rotacao_post",
+        "responses": {
+          "202": {
+            "description": "Solicitação aceita para processamento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "integer"
+                  },
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthFuncionarios": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/administracao/solicitacoes-lgpd": {
+      "get": {
+        "tags": [
+          "Administração"
+        ],
+        "summary": "Listar solicitações LGPD",
+        "operationId": "solicitacoes_lgpd_administracao_solicitacoes_lgpd_get",
+        "parameters": [
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            },
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Nexttoken"
+            },
+            "name": "nextToken",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Operação concluída com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthFuncionarios": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/administracao/vendas/{venda_id}/fluxo/reprocessamento": {
+      "post": {
+        "tags": [
+          "Administração"
+        ],
+        "summary": "Reprocessar saga com falha",
+        "operationId": "reprocessar_saga_administracao_vendas__venda_id__fluxo_reprocessamento_post",
+        "parameters": [
+          {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Venda Id"
+            },
+            "name": "venda_id",
+            "in": "path",
+            "description": "Identificador do recurso no contexto de domínio."
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Solicitação aceita para processamento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthFuncionarios": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/clientes": {
+      "post": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Cadastrar o próprio perfil",
+        "operationId": "cadastrar_cliente_clientes_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClienteEntrada"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Recurso criado com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthClientes": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/clientes/meu-perfil": {
+      "get": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Consultar o próprio perfil (dados protegidos)",
+        "operationId": "meu_perfil_clientes_meu_perfil_get",
+        "responses": {
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Operação concluída com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthClientes": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      },
+      "delete": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Excluir ou anonimizar meus dados (LGPD)",
+        "operationId": "excluir_dados_clientes_meu_perfil_delete",
+        "responses": {
+          "204": {
+            "description": "Operação concluída sem conteúdo de resposta."
+          },
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthClientes": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      },
+      "patch": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Atualizar o próprio perfil",
+        "operationId": "atualizar_perfil_clientes_meu_perfil_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClienteEdicao"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Operação concluída com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthClientes": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/clientes/meu-perfil/consentimentos": {
+      "post": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Registrar aceite ou revogação de consentimento",
+        "operationId": "registrar_consentimento_clientes_meu_perfil_consentimentos_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentimentoEntrada2"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Recurso criado com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthClientes": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/clientes/meu-perfil/exportacao": {
+      "get": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Exportar meus dados (LGPD; uma solicitação a cada 24 horas)",
+        "operationId": "exportar_dados_clientes_meu_perfil_exportacao_get",
+        "responses": {
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Operação concluída com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthClientes": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/clientes/meu-perfil/vendas": {
+      "get": {
+        "tags": [
+          "Vendas"
+        ],
+        "summary": "Consultar histórico de compras do cliente",
+        "operationId": "historico_do_cliente_clientes_meu_perfil_vendas_get",
+        "parameters": [
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            },
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Nexttoken"
+            },
+            "name": "nextToken",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Operação concluída com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthClientes": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/configuracao-inicial": {
+      "get": {
+        "tags": [
+          "Administração"
+        ],
+        "summary": "Consultar situação da configuração inicial",
+        "operationId": "situacao_configuracao_inicial_configuracao_inicial_get",
+        "responses": {
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Operação concluída com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      },
+      "post": {
+        "tags": [
+          "Administração"
+        ],
+        "summary": "Convidar o administrador inicial",
+        "operationId": "concluir_configuracao_inicial_configuracao_inicial_post",
+        "responses": {
+          "201": {
+            "description": "Recurso criado com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/gestao/veiculos": {
+      "get": {
+        "tags": [
+          "Gestão de veículos"
+        ],
+        "summary": "Listar veículos para gestão",
+        "operationId": "listar_gestao_gestao_veiculos_get",
+        "parameters": [
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            },
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Nexttoken"
+            },
+            "name": "nextToken",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 60
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Marca"
+            },
+            "name": "marca",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 80
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Modelo"
+            },
+            "name": "modelo",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 2100.0,
+                  "minimum": 1950.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Anomin"
+            },
+            "name": "anoMin",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 2100.0,
+                  "minimum": 1950.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Anomax"
+            },
+            "name": "anoMax",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 13
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Precomin"
+            },
+            "name": "precoMin",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 13
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Precomax"
+            },
+            "name": "precoMax",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/StatusVeiculo",
+              "default": "DISPONIVEL"
+            },
+            "name": "status",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Operação concluída com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthFuncionarios": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/gestao/veiculos/{veiculo_id}": {
+      "get": {
+        "tags": [
+          "Gestão de veículos"
+        ],
+        "summary": "Consultar veículo para gestão",
+        "operationId": "obter_gestao_gestao_veiculos__veiculo_id__get",
+        "parameters": [
+          {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Veiculo Id"
+            },
+            "name": "veiculo_id",
+            "in": "path",
+            "description": "Identificador do recurso no contexto de domínio."
+          }
+        ],
+        "responses": {
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Operação concluída com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthFuncionarios": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/veiculos": {
+      "get": {
+        "tags": [
+          "Veículos"
+        ],
+        "summary": "Listar veículos disponíveis por preço crescente",
+        "operationId": "listar_veiculos_veiculos_get",
+        "parameters": [
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            },
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Nexttoken"
+            },
+            "name": "nextToken",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 60
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Marca"
+            },
+            "name": "marca",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 80
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Modelo"
+            },
+            "name": "modelo",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 2100.0,
+                  "minimum": 1950.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Anomin"
+            },
+            "name": "anoMin",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 2100.0,
+                  "minimum": 1950.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Anomax"
+            },
+            "name": "anoMax",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 13
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Precomin"
+            },
+            "name": "precoMin",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 13
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Precomax"
+            },
+            "name": "precoMax",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Ordenar",
+              "default": "preco_asc"
+            },
+            "name": "ordenar",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Status",
+              "default": "DISPONIVEL"
+            },
+            "name": "status",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Operação concluída com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      },
+      "post": {
+        "tags": [
+          "Veículos"
+        ],
+        "summary": "Cadastrar veículo",
+        "operationId": "cadastrar_veiculo_veiculos_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VeiculoEntrada"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Recurso criado com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthFuncionarios": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/veiculos/vendidos": {
+      "get": {
+        "tags": [
+          "Veículos"
+        ],
+        "summary": "Listar veículos vendidos por preço crescente",
+        "operationId": "listar_vendidos_veiculos_vendidos_get",
+        "parameters": [
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            },
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Nexttoken"
+            },
+            "name": "nextToken",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 60
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Marca"
+            },
+            "name": "marca",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 80
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Modelo"
+            },
+            "name": "modelo",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 2100.0,
+                  "minimum": 1950.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Anomin"
+            },
+            "name": "anoMin",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 2100.0,
+                  "minimum": 1950.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Anomax"
+            },
+            "name": "anoMax",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 13
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Precomin"
+            },
+            "name": "precoMin",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 13
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Precomax"
+            },
+            "name": "precoMax",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Operação concluída com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthFuncionarios": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/veiculos/{veiculo_id}": {
+      "get": {
+        "tags": [
+          "Veículos"
+        ],
+        "summary": "Consultar veículo",
+        "operationId": "obter_veiculo_veiculos__veiculo_id__get",
+        "parameters": [
+          {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Veiculo Id"
+            },
+            "name": "veiculo_id",
+            "in": "path",
+            "description": "Identificador do recurso no contexto de domínio."
+          }
+        ],
+        "responses": {
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Operação concluída com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      },
+      "patch": {
+        "tags": [
+          "Veículos"
+        ],
+        "summary": "Atualizar veículo",
+        "operationId": "editar_veiculo_veiculos__veiculo_id__patch",
+        "parameters": [
+          {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Veiculo Id"
+            },
+            "name": "veiculo_id",
+            "in": "path",
+            "description": "Identificador do recurso no contexto de domínio."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VeiculoEdicao"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Operação concluída com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthFuncionarios": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/veiculos/{veiculo_id}/inativacao": {
+      "post": {
+        "tags": [
+          "Veículos"
+        ],
+        "summary": "Inativar anúncio",
+        "operationId": "inativar_veiculo_veiculos__veiculo_id__inativacao_post",
+        "parameters": [
+          {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Veiculo Id"
+            },
+            "name": "veiculo_id",
+            "in": "path",
+            "description": "Identificador do recurso no contexto de domínio."
+          }
+        ],
+        "responses": {
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Operação concluída com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthFuncionarios": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/veiculos/{veiculo_id}/reativacao": {
+      "post": {
+        "tags": [
+          "Veículos"
+        ],
+        "summary": "Reativar anúncio",
+        "operationId": "reativar_veiculo_veiculos__veiculo_id__reativacao_post",
+        "parameters": [
+          {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Veiculo Id"
+            },
+            "name": "veiculo_id",
+            "in": "path",
+            "description": "Identificador do recurso no contexto de domínio."
+          }
+        ],
+        "responses": {
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Operação concluída com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthFuncionarios": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/vendas": {
+      "get": {
+        "tags": [
+          "Vendas"
+        ],
+        "summary": "Listar vendas por situação, das mais recentes para as mais antigas",
+        "operationId": "listar_vendas_vendas_get",
+        "parameters": [
+          {
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/StatusVenda"
+            },
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Limit"
+            },
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Nexttoken"
+            },
+            "name": "nextToken",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Operação concluída com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthFuncionarios": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      },
+      "post": {
+        "tags": [
+          "Vendas"
+        ],
+        "summary": "Iniciar compra e reservar o veículo",
+        "operationId": "iniciar_compra_vendas_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NovaCompra"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Recurso criado com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthClientes": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/vendas/{venda_id}": {
+      "get": {
+        "tags": [
+          "Vendas"
+        ],
+        "summary": "Consultar venda",
+        "operationId": "consultar_venda_vendas__venda_id__get",
+        "parameters": [
+          {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Venda Id"
+            },
+            "name": "venda_id",
+            "in": "path",
+            "description": "Identificador do recurso no contexto de domínio."
+          }
+        ],
+        "responses": {
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Operação concluída com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthClientes": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/vendas/{venda_id}/desistencia": {
+      "post": {
+        "tags": [
+          "Vendas"
+        ],
+        "summary": "Desistir da compra",
+        "operationId": "desistir_vendas__venda_id__desistencia_post",
+        "parameters": [
+          {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Venda Id"
+            },
+            "name": "venda_id",
+            "in": "path",
+            "description": "Identificador do recurso no contexto de domínio."
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Solicitação aceita para processamento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthClientes": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/vendas/{venda_id}/documentacao": {
+      "get": {
+        "tags": [
+          "Vendas"
+        ],
+        "summary": "Consultar dados para documentação do veículo",
+        "operationId": "documentacao_vendas__venda_id__documentacao_get",
+        "parameters": [
+          {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Venda Id"
+            },
+            "name": "venda_id",
+            "in": "path",
+            "description": "Identificador do recurso no contexto de domínio."
+          }
+        ],
+        "responses": {
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Operação concluída com sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthFuncionarios": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    },
+    "/vendas/{venda_id}/retirada": {
+      "post": {
+        "tags": [
+          "Vendas"
+        ],
+        "summary": "Confirmar retirada do veículo",
+        "operationId": "retirada_vendas__venda_id__retirada_post",
+        "parameters": [
+          {
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Venda Id"
+            },
+            "name": "venda_id",
+            "in": "path",
+            "description": "Identificador do recurso no contexto de domínio."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RetiradaEntrada"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Solicitação aceita para processamento.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Return"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "A requisição contém dados ausentes ou inválidos.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Falha de negócio, autenticação, autorização, recurso ou dependência.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemaHttp"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "oauthFuncionarios": [
+              "openid"
+            ]
+          }
+        ],
+        "description": "A operação valida as regras do contexto de domínio responsável e retorna application/problem+json quando ocorre uma falha de negócio ou validação."
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ProblemaHttp": {
+        "type": "object",
+        "description": "Erro HTTP RFC 9457 com identificador de correlação.",
+        "required": [
+          "type",
+          "title",
+          "status",
+          "instance",
+          "correlationId"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri-reference",
+            "description": "Tipo do problema."
+          },
+          "title": {
+            "type": "string",
+            "description": "Resumo legível do problema."
+          },
+          "status": {
+            "type": "integer",
+            "minimum": 400,
+            "maximum": 599
+          },
+          "detail": {
+            "type": "string",
+            "description": "Detalhes adicionais do problema, se disponíveis."
+          },
+          "instance": {
+            "type": "string",
+            "description": "Caminho da requisição que originou o problema."
+          },
+          "correlationId": {
+            "type": "string",
+            "description": "Identificador para rastrear a requisição."
+          }
+        },
+        "additionalProperties": true
+      },
+      "AtualizacaoFuncionario": {
+        "properties": {
+          "grupo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GrupoFuncionario"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ativo": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ativo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "AtualizacaoFuncionario"
+      },
+      "GrupoFuncionario": {
+        "type": "string",
+        "enum": [
+          "vendedor",
+          "admin"
+        ],
+        "title": "GrupoFuncionario"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "NovoFuncionario": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Nome"
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+            "title": "Email"
+          },
+          "grupo": {
+            "$ref": "#/components/schemas/GrupoFuncionario"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nome",
+          "email",
+          "grupo"
+        ],
+        "title": "NovoFuncionario"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "ResponseValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "ResponseValidationError"
+      },
+      "ClienteEdicao": {
+        "properties": {
+          "nomeCompleto": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nomecompleto"
+          },
+          "telefone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 16
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefone"
+          },
+          "endereco": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EnderecoModelo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rg": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RgModelo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cnh": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 14
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cnh"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ClienteEdicao",
+        "description": "PATCH parcial; CPF e e-mail nao sao editaveis."
+      },
+      "ClienteEntrada": {
+        "properties": {
+          "nomeCompleto": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Nomecompleto"
+          },
+          "cpf": {
+            "type": "string",
+            "maxLength": 14,
+            "title": "Cpf",
+            "examples": [
+              "529.982.247-25"
+            ]
+          },
+          "dataNascimento": {
+            "type": "string",
+            "format": "date",
+            "title": "Datanascimento"
+          },
+          "telefone": {
+            "type": "string",
+            "maxLength": 16,
+            "title": "Telefone",
+            "examples": [
+              "+5511987654321"
+            ]
+          },
+          "endereco": {
+            "$ref": "#/components/schemas/EnderecoModelo"
+          },
+          "rg": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RgModelo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "consentimento": {
+            "$ref": "#/components/schemas/ConsentimentoModelo"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nomeCompleto",
+          "cpf",
+          "dataNascimento",
+          "telefone",
+          "endereco",
+          "consentimento"
+        ],
+        "title": "ClienteEntrada"
+      },
+      "ConsentimentoEntrada2": {
+        "properties": {
+          "versaoTermo": {
+            "type": "string",
+            "maxLength": 20,
+            "title": "Versaotermo"
+          },
+          "aceito": {
+            "type": "boolean",
+            "title": "Aceito"
+          },
+          "finalidades": {
+            "items": {
+              "$ref": "#/components/schemas/Finalidade"
+            },
+            "type": "array",
+            "maxItems": 2,
+            "minItems": 1,
+            "title": "Finalidades"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "versaoTermo",
+          "aceito",
+          "finalidades"
+        ],
+        "title": "ConsentimentoEntrada2"
+      },
+      "ConsentimentoModelo": {
+        "properties": {
+          "versaoTermo": {
+            "type": "string",
+            "maxLength": 20,
+            "title": "Versaotermo"
+          },
+          "aceito": {
+            "type": "boolean",
+            "title": "Aceito"
+          },
+          "finalidades": {
+            "items": {
+              "$ref": "#/components/schemas/Finalidade"
+            },
+            "type": "array",
+            "maxItems": 2,
+            "minItems": 1,
+            "title": "Finalidades"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "versaoTermo",
+          "aceito",
+          "finalidades"
+        ],
+        "title": "ConsentimentoModelo"
+      },
+      "EnderecoModelo": {
+        "properties": {
+          "cep": {
+            "type": "string",
+            "maxLength": 9,
+            "title": "Cep"
+          },
+          "logradouro": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Logradouro"
+          },
+          "numero": {
+            "type": "string",
+            "maxLength": 10,
+            "title": "Numero"
+          },
+          "complemento": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 60
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Complemento"
+          },
+          "bairro": {
+            "type": "string",
+            "maxLength": 80,
+            "title": "Bairro"
+          },
+          "cidade": {
+            "type": "string",
+            "maxLength": 80,
+            "title": "Cidade"
+          },
+          "uf": {
+            "type": "string",
+            "maxLength": 2,
+            "minLength": 2,
+            "title": "Uf"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "cep",
+          "logradouro",
+          "numero",
+          "bairro",
+          "cidade",
+          "uf"
+        ],
+        "title": "EnderecoModelo"
+      },
+      "Finalidade": {
+        "type": "string",
+        "enum": [
+          "EXECUCAO_CONTRATO",
+          "MARKETING"
+        ],
+        "title": "Finalidade"
+      },
+      "RgModelo": {
+        "properties": {
+          "numero": {
+            "type": "string",
+            "maxLength": 20,
+            "title": "Numero"
+          },
+          "orgaoEmissor": {
+            "type": "string",
+            "maxLength": 10,
+            "title": "Orgaoemissor"
+          },
+          "uf": {
+            "type": "string",
+            "maxLength": 2,
+            "minLength": 2,
+            "title": "Uf"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "numero",
+          "orgaoEmissor",
+          "uf"
+        ],
+        "title": "RgModelo"
+      },
+      "CobrancaEntrada": {
+        "properties": {
+          "referencia": {
+            "type": "string",
+            "maxLength": 64,
+            "title": "Referencia"
+          },
+          "valorCentavos": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Valorcentavos"
+          },
+          "pagador": {
+            "$ref": "#/components/schemas/Pagador"
+          },
+          "expiraEm": {
+            "type": "string",
+            "maxLength": 30,
+            "title": "Expiraem"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "referencia",
+          "valorCentavos",
+          "pagador",
+          "expiraEm"
+        ],
+        "title": "CobrancaEntrada"
+      },
+      "EstornoEntrada": {
+        "properties": {
+          "idTransacaoExterna": {
+            "type": "string",
+            "maxLength": 64,
+            "title": "Idtransacaoexterna"
+          },
+          "valorCentavos": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Valorcentavos"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "idTransacaoExterna",
+          "valorCentavos"
+        ],
+        "title": "EstornoEntrada"
+      },
+      "Pagador": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Nome"
+          },
+          "cpf": {
+            "type": "string",
+            "maxLength": 14,
+            "title": "Cpf"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nome",
+          "cpf"
+        ],
+        "title": "Pagador"
+      },
+      "SimulacaoEntrada": {
+        "properties": {
+          "resultado": {
+            "type": "string",
+            "pattern": "^(APROVADO|RECUSADO)$",
+            "title": "Resultado"
+          },
+          "atrasoSegundos": {
+            "type": "integer",
+            "maximum": 900.0,
+            "minimum": 0.0,
+            "title": "Atrasosegundos",
+            "default": 0
+          },
+          "duplicar": {
+            "type": "boolean",
+            "title": "Duplicar",
+            "default": false
+          },
+          "foraDeOrdem": {
+            "type": "boolean",
+            "title": "Foradeordem",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "resultado"
+        ],
+        "title": "SimulacaoEntrada"
+      },
+      "ConferenciaEntrada": {
+        "properties": {
+          "documentoApresentado": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 2,
+            "title": "Documentoapresentado"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "documentoApresentado"
+        ],
+        "title": "ConferenciaEntrada"
+      },
+      "DocumentacaoEntrada": {
+        "properties": {
+          "protocolo": {
+            "type": "string",
+            "maxLength": 60,
+            "minLength": 3,
+            "title": "Protocolo"
+          },
+          "emitidaEm": {
+            "type": "string",
+            "maxLength": 30,
+            "title": "Emitidaem"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "protocolo",
+          "emitidaEm"
+        ],
+        "title": "DocumentacaoEntrada"
+      },
+      "NovaCompra": {
+        "properties": {
+          "veiculoId": {
+            "type": "string",
+            "maxLength": 36,
+            "minLength": 1,
+            "title": "Veiculoid"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "veiculoId"
+        ],
+        "title": "NovaCompra"
+      },
+      "RetiradaEntrada": {
+        "properties": {
+          "retiradaEm": {
+            "type": "string",
+            "maxLength": 30,
+            "title": "Retiradaem"
+          },
+          "documentacao": {
+            "$ref": "#/components/schemas/DocumentacaoEntrada"
+          },
+          "conferencia": {
+            "$ref": "#/components/schemas/ConferenciaEntrada"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "retiradaEm",
+          "documentacao",
+          "conferencia"
+        ],
+        "title": "RetiradaEntrada"
+      },
+      "StatusVenda": {
+        "type": "string",
+        "enum": [
+          "CRIADO",
+          "RESERVADO",
+          "AGUARDANDO_PAGAMENTO",
+          "PAGO",
+          "CONCLUIDO",
+          "CANCELADO",
+          "ESTORNADO"
+        ],
+        "title": "StatusVenda"
+      },
+      "Cambio": {
+        "type": "string",
+        "enum": [
+          "MANUAL",
+          "AUTOMATICO",
+          "CVT",
+          "AUTOMATIZADO"
+        ],
+        "title": "Cambio"
+      },
+      "Combustivel": {
+        "type": "string",
+        "enum": [
+          "GASOLINA",
+          "ETANOL",
+          "FLEX",
+          "DIESEL",
+          "HIBRIDO",
+          "ELETRICO",
+          "GNV"
+        ],
+        "title": "Combustivel"
+      },
+      "StatusVeiculo": {
+        "type": "string",
+        "enum": [
+          "DISPONIVEL",
+          "RESERVADO",
+          "AGUARDANDO_RETIRADA",
+          "VENDIDO",
+          "INATIVO"
+        ],
+        "title": "StatusVeiculo"
+      },
+      "VeiculoEdicao": {
+        "properties": {
+          "marca": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 60,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marca"
+          },
+          "modelo": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modelo"
+          },
+          "anoFabricacao": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anofabricacao"
+          },
+          "anoModelo": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anomodelo"
+          },
+          "cor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 30,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cor"
+          },
+          "preco": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 13
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preco"
+          },
+          "quilometragem": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quilometragem"
+          },
+          "placa": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 7
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Placa"
+          },
+          "renavam": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 11
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Renavam"
+          },
+          "chassi": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 17
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chassi"
+          },
+          "combustivel": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Combustivel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cambio": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Cambio"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "descricao": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descricao"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "VeiculoEdicao",
+        "description": "PATCH parcial: so os campos enviados (e nao nulos) mudam."
+      },
+      "VeiculoEntrada": {
+        "properties": {
+          "marca": {
+            "type": "string",
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Marca"
+          },
+          "modelo": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Modelo"
+          },
+          "anoFabricacao": {
+            "type": "integer",
+            "title": "Anofabricacao"
+          },
+          "anoModelo": {
+            "type": "integer",
+            "title": "Anomodelo"
+          },
+          "cor": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 1,
+            "title": "Cor"
+          },
+          "preco": {
+            "type": "string",
+            "maxLength": 13,
+            "title": "Preco",
+            "examples": [
+              "129900.00"
+            ]
+          },
+          "quilometragem": {
+            "type": "integer",
+            "title": "Quilometragem"
+          },
+          "placa": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 7
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Placa"
+          },
+          "renavam": {
+            "type": "string",
+            "maxLength": 11,
+            "title": "Renavam"
+          },
+          "chassi": {
+            "type": "string",
+            "maxLength": 17,
+            "title": "Chassi"
+          },
+          "combustivel": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Combustivel"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cambio": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Cambio"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "descricao": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descricao"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "marca",
+          "modelo",
+          "anoFabricacao",
+          "anoModelo",
+          "cor",
+          "preco",
+          "quilometragem",
+          "renavam",
+          "chassi"
+        ],
+        "title": "VeiculoEntrada"
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "oauthClientes": {
+        "type": "oauth2",
+        "description": "Autenticação de clientes; domínio definido por ambiente.",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://clientes.auth.exemplo.invalid/oauth2/authorize",
+            "tokenUrl": "https://clientes.auth.exemplo.invalid/oauth2/token",
+            "scopes": {
+              "openid": "Identidade",
+              "email": "Endereço de e-mail"
+            }
+          }
+        }
+      },
+      "oauthFuncionarios": {
+        "type": "oauth2",
+        "description": "Autenticação de funcionários; domínio definido por ambiente.",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://funcionarios.auth.exemplo.invalid/oauth2/authorize",
+            "tokenUrl": "https://funcionarios.auth.exemplo.invalid/oauth2/token",
+            "scopes": {
+              "openid": "Identidade",
+              "email": "Endereço de e-mail"
+            }
+          }
+        }
+      },
+      "awsSigV4": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization",
+        "description": "Acesso de serviço por assinatura AWS Signature Version 4."
+      }
+    }
+  }
+}

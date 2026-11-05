@@ -1,0 +1,159 @@
+name: Validação de pull request
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualidade:
+    name: Qualidade do código
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-python
+      - name: Lint (ruff check)
+        run: ruff check .
+      - name: Formatação (ruff format)
+        run: ruff format --check .
+      - name: Tipagem (mypy)
+        run: mypy backend/src
+      - name: Arquitetura em camadas (import-linter)
+        run: PYTHONPATH=backend/src lint-imports
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: "1.16.6"
+      - name: Formatação do Terraform
+        run: terraform fmt -check -recursive infra/terraform
+
+  testes:
+    name: Testes do backend
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-python
+      # Unitários, integração (Moto), contrato OpenAPI, autorização e arquitetura; cobertura mínima de 80%.
+      - name: Testes com cobertura
+        run: pytest -n auto --cov --cov-branch
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-24.04-arm
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-frontend
+      - name: Lint
+        run: npm run lint
+      - name: Tipagem
+        run: npm run typecheck
+      - name: Tipagem dos testes E2E
+        run: npm run typecheck:e2e
+      - name: Testes unitários (Jest)
+        run: npm run test:ci
+      - uses: ./.github/actions/build-frontend
+      - name: Instala o Chromium (Playwright)
+        run: npx playwright install --with-deps chromium
+      - name: Testes no navegador (Playwright)
+        run: npm run test:browser
+      - name: Auditoria das dependências de produção
+        run: npm audit --omit=dev --audit-level=high
+
+  seguranca:
+    name: Segurança
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: ./.github/actions/setup-python
+      - name: Análise estática de segurança (bandit)
+        run: bandit -q -r backend/src -ll
+      - name: Auditoria das dependências Python (pip-audit)
+        run: pip-audit
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: "1.16.6"
+      - name: Valida o Terraform do ambiente
+        run: terraform -chdir=infra/terraform/envs/dev init -backend=false -input=false && terraform -chdir=infra/terraform/envs/dev validate
+      - name: Valida o Terraform do bootstrap
+        run: terraform -chdir=infra/terraform/bootstrap init -backend=false -input=false && terraform -chdir=infra/terraform/bootstrap validate
+      - name: Instala actionlint e zizmor
+        run: python -m pip install actionlint-py zizmor
+      - name: Valida os workflows (actionlint)
+        run: actionlint
+      - name: Analisa a segurança dos workflows (zizmor)
+        run: zizmor --offline .github/workflows
+      - name: Procura segredos no código (gitleaks)
+        run: |
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.21.2/gitleaks_8.21.2_linux_arm64.tar.gz | tar -xz gitleaks
+          ./gitleaks detect --no-banner --redact
+
+  plano:
+    name: Plano do Terraform
+    # So em PRs de branches do proprio repositorio (forks nao recebem credenciais).
+    if: github.event.pull_request.head.repo.full_name == github.repository && vars.AWS_PLAN_ROLE_ARN != ''
+    runs-on: ubuntu-24.04-arm
+    needs: [qualidade, testes, seguranca]
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - name: Atualiza o pip
+        run: python -m pip install --upgrade pip
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: "1.16.6"
+          terraform_wrapper: false
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_PLAN_ROLE_ARN }}
+          aws-region: us-east-1
+      - name: Monta a layer de dependências das Lambdas (arm64)
+        run: |
+          mkdir -p build/layer/python
+          python -m pip install --target build/layer/python --group runtime
+      - name: Gera o plano do Terraform
+        env:
+          TF_VAR_admin_email: ${{ vars.ADMIN_EMAIL }}
+          TF_VAR_alertas_email: ${{ vars.ALERTAS_EMAIL }}
+          STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+        run: |
+          DESTROY=$(grep -E '^destroy:' infra/config/dev.yml | awk '{print $2}')
+          terraform -chdir=infra/terraform/envs/dev init -input=false -no-color -backend-config="bucket=$STATE_BUCKET"
+          if [ "$DESTROY" = "true" ]; then FLAGS="-destroy"; else FLAGS=""; fi
+          terraform -chdir=infra/terraform/envs/dev plan -input=false -no-color $FLAGS -out=tfplan
+          terraform -chdir=infra/terraform/envs/dev show -no-color tfplan > plano.txt
+          echo "DESTROY=$DESTROY" >> "$GITHUB_ENV"
+      - name: Comenta o plano no pull request
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const fs = require('fs');
+            const plano = fs.readFileSync('plano.txt', 'utf8').slice(0, 60000);
+            const aviso = process.env.DESTROY === 'true' ? '## ATENCAO: DESTROY\n\n' : '';
+            await github.rest.issues.createComment({
+              ...context.repo, issue_number: context.issue.number,
+              body: aviso + '### terraform plan\n```\n' + plano + '\n```',
+            });

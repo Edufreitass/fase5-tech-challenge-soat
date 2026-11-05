@@ -1,0 +1,72 @@
+@import "tailwindcss";
+@import "@xyflow/react/dist/style.css";
+
+/* Paleta FIAP (extraida de fiap.com.br): magenta, preto, branco e cinzas azulados. */
+@theme {
+  --color-fiap: #ed145b;
+  --color-fiap-escuro: #c10f4a;
+  --color-fiap-claro: #ff4d85;
+  --color-tinta: #0e0f10;
+  --color-carvao: #181818;
+  --color-ardosia: #98a6ae;
+  --color-ultrassonico: #acc1cc;
+  --color-prata: #bdbfc7;
+  --color-neve: #d9d9d9;
+  --font-sans: "Montserrat", "Gotham HTF", ui-sans-serif, system-ui, sans-serif;
+  --animate-flutuar: flutuar 9s ease-in-out infinite;
+  --animate-brilho: brilho 3s ease-in-out infinite;
+  --animate-pulso-suave: pulso-suave 2s ease-in-out infinite;
+  @keyframes flutuar {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(30px, -40px, 0) scale(1.08); }
+  }
+  @keyframes brilho {
+    0%, 100% { opacity: .55; }
+    50% { opacity: 1; }
+  }
+  @keyframes pulso-suave {
+    0%, 100% { box-shadow: 0 0 0 0 rgb(237 20 91 / .55); }
+    50% { box-shadow: 0 0 0 10px rgb(237 20 91 / 0); }
+  }
+}
+
+html { scroll-behavior: smooth; color-scheme: dark; }
+body { @apply bg-tinta font-sans text-white antialiased; min-height: 100dvh; }
+::selection { background: var(--color-fiap); color: white; }
+
+@utility botao {
+  @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold tracking-wide transition duration-300 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fiap;
+}
+@utility botao-primario {
+  @apply botao bg-fiap text-white shadow-lg shadow-fiap/30 hover:bg-fiap-claro hover:shadow-fiap/50;
+}
+@utility botao-contorno {
+  @apply botao border border-white/25 text-white hover:border-fiap hover:text-fiap;
+}
+@utility botao-fantasma {
+  @apply botao text-ultrassonico hover:bg-white/10 hover:text-white;
+}
+@utility cartao {
+  @apply rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-sm;
+}
+@utility campo {
+  @apply min-h-11 w-full rounded-xl border border-white/15 bg-black/40 px-4 py-2.5 text-sm text-white placeholder:text-ardosia transition focus:border-fiap focus:outline-none focus:ring-2 focus:ring-fiap/30;
+}
+@utility rotulo {
+  @apply mb-1 block text-xs font-semibold uppercase tracking-wider text-ultrassonico;
+}
+
+
+/* React Flow no tema escuro, com estados da saga. */
+.react-flow { --xy-background-color: transparent; --xy-edge-stroke: var(--color-ardosia); }
+.react-flow__attribution { display: none; }
+.react-flow__node { @apply rounded-xl border px-4 py-3 text-center text-xs font-bold; width: 168px; }
+.react-flow__node.feito { @apply border-emerald-400/50 bg-emerald-400/10 text-emerald-300; }
+.react-flow__node.atual { @apply border-fiap bg-fiap/15 text-white animate-pulso-suave; }
+.react-flow__node.pendente { @apply border-white/15 bg-white/5 text-ardosia; }
+.react-flow__node.falha { @apply border-red-400/60 bg-red-500/10 text-red-300; }
+.react-flow__edge.feito .react-flow__edge-path { stroke: #34d399; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}

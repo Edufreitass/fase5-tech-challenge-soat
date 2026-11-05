@@ -1,0 +1,5 @@
+rules:
+  # Sugestao de estilo recente do zizmor para actions locais (./.github/actions/...).
+  # As actions compostas do projeto sao referenciadas por caminho relativo, que continua valido.
+  self-repository:
+    disable: true

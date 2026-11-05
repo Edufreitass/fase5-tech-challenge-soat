@@ -1,0 +1,12 @@
+@page { size: A4; margin: 18mm 16mm; }
+body { font-family: Helvetica, Arial, sans-serif; color: #232F3E; font-size: 10.5pt; line-height: 1.4; }
+h1 { font-size: 20pt; margin: 0 0 4pt; } h2 { font-size: 13.5pt; margin: 16pt 0 5pt; border-bottom: 1px solid #ccd; padding-bottom: 2pt; }
+.sub { color: #566; margin-bottom: 8pt; }
+.nota { background: #f3f5f8; border-left: 3px solid #6b7a99; padding: 6pt 9pt; font-size: 9.5pt; margin: 8pt 0; }
+table { border-collapse: collapse; width: 100%; margin: 6pt 0; font-size: 9.2pt; page-break-inside: auto; }
+tr { page-break-inside: avoid; }
+th, td { border: 1px solid #c9ced8; padding: 4pt 5pt; text-align: left; vertical-align: top; }
+th { background: #e8ecf3; }
+code { font-size: 9pt; background: #f0f2f6; padding: 0 2pt; }
+.pg { page-break-before: always; } img { width: 100%; }
+.cap { font-size: 9pt; color: #566; }

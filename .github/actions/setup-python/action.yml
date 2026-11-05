@@ -1,0 +1,18 @@
+name: Preparar o backend Python
+description: Configura Python 3.13 e instala um grupo de dependências do pyproject.toml.
+inputs:
+  dependency-group:
+    description: Grupo de dependências definido no pyproject.toml.
+    required: false
+    default: dev
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+      with:
+        python-version: "3.13"
+    - name: Instala as dependências Python
+      run: python -m pip install --upgrade pip && python -m pip install --group "$DEPENDENCY_GROUP"
+      shell: bash
+      env:
+        DEPENDENCY_GROUP: ${{ inputs.dependency-group }}

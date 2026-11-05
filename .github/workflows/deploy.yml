@@ -1,0 +1,136 @@
+name: Deploy na AWS
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+jobs:
+  config:
+    name: Ler a configuração de destroy
+    runs-on: ubuntu-24.04-arm
+    outputs:
+      destroy: ${{ steps.cfg.outputs.destroy }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - id: cfg
+        name: Lê destroy de infra/config/dev.yml
+        run: echo "destroy=$(grep -E '^destroy:' infra/config/dev.yml | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+
+  apply:
+    name: Publicar o ambiente
+    needs: config
+    # Sem bootstrap (variavel ausente) o deploy e ignorado, nao falha.
+    if: needs.config.outputs.destroy == 'false' && vars.AWS_DEPLOY_ROLE_ARN != ''
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - name: Atualiza o pip
+        run: python -m pip install --upgrade pip
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: "1.16.6"
+          terraform_wrapper: false
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+      - name: Monta a layer de dependências das Lambdas (arm64)
+        run: |
+          mkdir -p build/layer/python
+          python -m pip install --target build/layer/python --group runtime
+      - name: Aplica a infraestrutura e carrega os dados iniciais (Terraform)
+        env:
+          TF_VAR_admin_email: ${{ vars.ADMIN_EMAIL }}
+          TF_VAR_alertas_email: ${{ vars.ALERTAS_EMAIL }}
+          TF_VAR_versao_app: ${{ github.sha }}
+          STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+        run: |
+          terraform -chdir=infra/terraform/envs/dev init -input=false -no-color -backend-config="bucket=$STATE_BUCKET"
+          terraform -chdir=infra/terraform/envs/dev apply -input=false -no-color -auto-approve
+          {
+            echo "API_URL=$(terraform -chdir=infra/terraform/envs/dev output -raw api_url)"
+            echo "SITE_URL=$(terraform -chdir=infra/terraform/envs/dev output -raw frontend_url)"
+            echo "SITE_BUCKET=$(terraform -chdir=infra/terraform/envs/dev output -raw frontend_bucket)"
+            echo "SITE_DIST=$(terraform -chdir=infra/terraform/envs/dev output -raw frontend_distribuicao_id)"
+          } >> "$GITHUB_ENV"
+      - uses: ./.github/actions/setup-frontend
+      - uses: ./.github/actions/build-frontend
+      # config.json vem do Terraform (IDs do ambiente): o sync nunca o toca.
+      - name: Publica o frontend (S3 e invalidação do CloudFront)
+        working-directory: frontend
+        run: |
+          aws s3 sync dist "s3://$SITE_BUCKET" --exclude "config.json" --exclude "index.html" --cache-control "public,max-age=31536000,immutable" --delete
+          aws s3 cp dist/index.html "s3://$SITE_BUCKET/index.html" --cache-control "no-cache" --content-type "text/html; charset=utf-8"
+          aws cloudfront create-invalidation --distribution-id "$SITE_DIST" --paths "/index.html" "/config.json" > /dev/null
+      - name: Teste rápido do ambiente publicado
+        run: |
+          curl -fsS "$API_URL/health"
+          curl -fsS "$API_URL/docs/openapi.json" -o /dev/null
+          test "$(curl -s -o /dev/null -w '%{http_code}' "$API_URL/administracao/funcionarios")" = "401"
+          curl -fsS "$SITE_URL/" | grep -q '<div id="raiz">'
+          curl -fsS "$SITE_URL/config.json" | grep -q '"apiBase"'
+          curl -fsS "$SITE_URL/api/veiculos?limit=1" | grep -q '"itens"'
+          test "$(curl -s -o /dev/null -w '%{http_code}' "$SITE_URL/api/administracao/funcionarios")" = "401"
+      - name: Mostra os endereços no resumo da execução
+        run: |
+          {
+            echo "### Ambiente publicado"
+            echo "- Site: $SITE_URL"
+            echo "- API (Swagger): $API_URL/docs"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  destroy:
+    name: Remover o ambiente
+    needs: config
+    if: needs.config.outputs.destroy == 'true' && vars.AWS_DEPLOY_ROLE_ARN != ''
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+      id-token: write
+    # Aprovacao do responsavel (required reviewer) quando os controles avancados existem (repo publico).
+    environment: ${{ vars.CONTROLES_AVANCADOS == 'true' && 'dev' || '' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: "1.16.6"
+          terraform_wrapper: false
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+      - name: Cria uma layer vazia (o destroy não precisa das dependências)
+        run: |
+          mkdir -p build/layer
+          echo vazio > build/layer/LEIA.txt
+      - name: Remove a infraestrutura (Terraform)
+        env:
+          TF_VAR_admin_email: ${{ vars.ADMIN_EMAIL }}
+          TF_VAR_alertas_email: ${{ vars.ALERTAS_EMAIL }}
+          STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+        run: |
+          terraform -chdir=infra/terraform/envs/dev init -input=false -no-color -backend-config="bucket=$STATE_BUCKET"
+          terraform -chdir=infra/terraform/envs/dev destroy -input=false -no-color -auto-approve
+      - name: Remove os parâmetros do ambiente no SSM
+        run: |
+          aws ssm get-parameters-by-path --path /revenda/dev --recursive --query 'Parameters[].Name' --output text \
+            | tr '\t' '\n' | xargs -r -n 10 aws ssm delete-parameters --names > /dev/null

@@ -1,0 +1,41 @@
+ambiente: dev
+regiao: us-east-1
+destroy: true
+
+negocio:
+  prazo_pagamento_segundos: 172800
+  prazo_retirada_segundos: 604800
+  retencao_inativos_dias: 730
+  versao_termo_vigente: "2026-10-v1"
+
+api:
+  cors_origens: []
+  throttling:
+    stage_rps: 50
+    stage_burst: 100
+    post_vendas_rps: 5
+    post_clientes_rps: 2
+    webhook_rps: 20
+
+dynamodb_capacidade:
+  veiculos: { rcu: 4, wcu: 3 }
+  veiculos_gsi_status_preco: { rcu: 6, wcu: 3 }
+  clientes: { rcu: 2, wcu: 2 }
+  vendas: { rcu: 3, wcu: 4 }
+  vendas_gsi_cliente: { rcu: 2, wcu: 3 }
+  vendas_gsi_status: { rcu: 2, wcu: 3 }
+  pagamentos: { rcu: 2, wcu: 3 }
+  idempotencia: { rcu: 2, wcu: 2 }
+  gateway_mock: { rcu: 2, wcu: 2 }
+
+lambda:
+  memoria_api_mb: 1024
+  memoria_worker_mb: 512
+
+observabilidade:
+  retencao_logs_dias: 7
+  retencao_auditoria_dias: 1827
+  xray_amostragem: 1.0
+
+gateway_mock:
+  habilitado: true

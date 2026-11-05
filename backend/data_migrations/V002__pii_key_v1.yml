@@ -1,0 +1,5 @@
+versao: 2
+descricao: Par de chaves X25519 para criptografia por campo (v1)
+operacoes:
+  - operacao: ssm.gerar_par_chaves_pii
+    versao: 1

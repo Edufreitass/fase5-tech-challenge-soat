@@ -1,0 +1,9 @@
+name: Compilar o frontend
+description: Executa o build de produção do frontend.
+runs:
+  using: composite
+  steps:
+    - name: Gera os arquivos de produção
+      run: npm run build
+      shell: bash
+      working-directory: frontend

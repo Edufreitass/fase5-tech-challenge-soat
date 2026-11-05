@@ -1,0 +1,1055 @@
+{
+  "Comment": "Saga de compra de veiculo (orquestrada)",
+  "StartAt": "EmitirCodigoPagamento",
+  "States": {
+    "EmitirCodigoPagamento": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${fn_pagamentos_worker_arn}",
+        "Payload": {
+          "acao": "EMITIR_CODIGO",
+          "vendaId.$": "$.vendaId",
+          "clienteId.$": "$.clienteId",
+          "valorCentavos.$": "$.valorCentavos",
+          "prazoSegundos.$": "$.prazos.pagamentoSegundos"
+        }
+      },
+      "TimeoutSeconds": 60,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "Erro.Transitorio",
+            "DependenciaIndisponivel"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 6,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "ResultPath": "$.pagamento",
+      "ResultSelector": {
+        "pagamentoId.$": "$.Payload.pagamentoId",
+        "expiraEm.$": "$.Payload.expiraEm"
+      },
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "MotivoFalhaEmissao"
+        }
+      ],
+      "Next": "MarcarAguardandoPagamento"
+    },
+    "MarcarAguardandoPagamento": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${fn_vendas_worker_arn}",
+        "Payload": {
+          "acao": "ATUALIZAR_VENDA",
+          "vendaId.$": "$.vendaId",
+          "de": "RESERVADO",
+          "para": "AGUARDANDO_PAGAMENTO",
+          "ator": "SISTEMA",
+          "definir": {
+            "pagamentoId.$": "$.pagamento.pagamentoId"
+          }
+        }
+      },
+      "TimeoutSeconds": 60,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "Erro.Transitorio",
+            "DependenciaIndisponivel"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 6,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "FalhaCompensacao"
+        }
+      ],
+      "Next": "AguardarPagamento"
+    },
+    "AguardarPagamento": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Parameters": {
+        "FunctionName": "${fn_vendas_worker_arn}",
+        "Payload": {
+          "acao": "REGISTRAR_TOKEN",
+          "etapa": "PAGAMENTO",
+          "vendaId.$": "$.vendaId",
+          "pagamentoId.$": "$.pagamento.pagamentoId",
+          "taskToken.$": "$$.Task.Token"
+        }
+      },
+      "TimeoutSecondsPath": "$.prazos.pagamentoSegundos",
+      "ResultPath": "$.resultadoPagamento",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 6,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "Pagamento.Recusado"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "MotivoRecusado"
+        },
+        {
+          "ErrorEquals": [
+            "Venda.Desistencia"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "MotivoDesistencia"
+        },
+        {
+          "ErrorEquals": [
+            "States.Timeout"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "MotivoExpirado"
+        }
+      ],
+      "Next": "MarcarVendaPaga"
+    },
+    "MarcarVendaPaga": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${fn_vendas_worker_arn}",
+        "Payload": {
+          "acao": "ATUALIZAR_VENDA",
+          "vendaId.$": "$.vendaId",
+          "de": "AGUARDANDO_PAGAMENTO",
+          "para": "PAGO",
+          "ator": "GATEWAY",
+          "prazoRetiradaSegundos.$": "$.prazos.retiradaSegundos"
+        }
+      },
+      "TimeoutSeconds": 60,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "Erro.Transitorio",
+            "DependenciaIndisponivel"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 6,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "FalhaCompensacao"
+        }
+      ],
+      "Next": "VeiculoAguardandoRetirada"
+    },
+    "VeiculoAguardandoRetirada": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${fn_veiculos_worker_arn}",
+        "Payload": {
+          "acao": "AGUARDANDO_RETIRADA",
+          "vendaId.$": "$.vendaId",
+          "veiculoId.$": "$.veiculoId"
+        }
+      },
+      "TimeoutSeconds": 60,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "Erro.Transitorio",
+            "DependenciaIndisponivel"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 6,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "MotivoErroPosPagamento"
+        }
+      ],
+      "Next": "PublicarPagamentoConfirmado"
+    },
+    "PublicarPagamentoConfirmado": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "${topico_eventos_arn}",
+        "Message": {
+          "versaoEvento": 1,
+          "tipo": "PagamentoConfirmado",
+          "ocorridoEm.$": "$$.State.EnteredTime",
+          "correlationId.$": "$.correlationId",
+          "vendaId.$": "$.vendaId",
+          "clienteId.$": "$.clienteId",
+          "veiculoId.$": "$.veiculoId"
+        },
+        "MessageAttributes": {
+          "tipo": {
+            "DataType": "String",
+            "StringValue": "PagamentoConfirmado"
+          }
+        }
+      },
+      "ResultPath": null,
+      "TimeoutSeconds": 30,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "Erro.Transitorio",
+            "DependenciaIndisponivel"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 6,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "FalhaCompensacao"
+        }
+      ],
+      "Next": "AguardarRetirada"
+    },
+    "AguardarRetirada": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Parameters": {
+        "FunctionName": "${fn_vendas_worker_arn}",
+        "Payload": {
+          "acao": "REGISTRAR_TOKEN",
+          "etapa": "RETIRADA",
+          "vendaId.$": "$.vendaId",
+          "taskToken.$": "$$.Task.Token"
+        }
+      },
+      "TimeoutSecondsPath": "$.prazos.retiradaSegundos",
+      "ResultPath": "$.resultadoRetirada",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 6,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "Venda.Desistencia"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "MotivoDesistenciaPosPago"
+        },
+        {
+          "ErrorEquals": [
+            "States.Timeout"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "ResolverRetirada"
+        }
+      ],
+      "Next": "BaixarVeiculo"
+    },
+    "BaixarVeiculo": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${fn_veiculos_worker_arn}",
+        "Payload": {
+          "acao": "BAIXAR_VEICULO",
+          "vendaId.$": "$.vendaId",
+          "veiculoId.$": "$.veiculoId"
+        }
+      },
+      "TimeoutSeconds": 60,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "Erro.Transitorio",
+            "DependenciaIndisponivel"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 6,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "FalhaCompensacao"
+        }
+      ],
+      "Next": "ConcluirVenda"
+    },
+    "ConcluirVenda": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${fn_vendas_worker_arn}",
+        "Payload": {
+          "acao": "ATUALIZAR_VENDA",
+          "vendaId.$": "$.vendaId",
+          "de": "PAGO",
+          "para": "CONCLUIDO",
+          "ator": "VENDEDOR"
+        }
+      },
+      "TimeoutSeconds": 60,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "Erro.Transitorio",
+            "DependenciaIndisponivel"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 6,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "FalhaCompensacao"
+        }
+      ],
+      "Next": "LiberarLockConcluida"
+    },
+    "LiberarLockConcluida": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${fn_vendas_worker_arn}",
+        "Payload": {
+          "acao": "LIBERAR_LOCK",
+          "vendaId.$": "$.vendaId",
+          "clienteId.$": "$.clienteId"
+        }
+      },
+      "TimeoutSeconds": 60,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "Erro.Transitorio",
+            "DependenciaIndisponivel"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 6,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "FalhaCompensacao"
+        }
+      ],
+      "Next": "PublicarVendaConcluida"
+    },
+    "PublicarVendaConcluida": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "${topico_eventos_arn}",
+        "Message": {
+          "versaoEvento": 1,
+          "tipo": "VendaConcluida",
+          "ocorridoEm.$": "$$.State.EnteredTime",
+          "correlationId.$": "$.correlationId",
+          "vendaId.$": "$.vendaId",
+          "clienteId.$": "$.clienteId",
+          "veiculoId.$": "$.veiculoId"
+        },
+        "MessageAttributes": {
+          "tipo": {
+            "DataType": "String",
+            "StringValue": "VendaConcluida"
+          }
+        }
+      },
+      "ResultPath": null,
+      "TimeoutSeconds": 30,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "Erro.Transitorio",
+            "DependenciaIndisponivel"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 6,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "FalhaCompensacao"
+        }
+      ],
+      "Next": "Concluido"
+    },
+    "Concluido": {
+      "Type": "Succeed"
+    },
+    "MotivoRecusado": {
+      "Type": "Pass",
+      "Result": {
+        "motivo": "RECUSADO",
+        "statusAtual": "AGUARDANDO_PAGAMENTO"
+      },
+      "ResultPath": "$.cancelamento",
+      "Next": "LiberarVeiculoCancelamento"
+    },
+    "MotivoDesistencia": {
+      "Type": "Pass",
+      "Result": {
+        "motivo": "DESISTENCIA",
+        "statusAtual": "AGUARDANDO_PAGAMENTO"
+      },
+      "ResultPath": "$.cancelamento",
+      "Next": "CancelarCodigoPagamento"
+    },
+    "MotivoExpirado": {
+      "Type": "Pass",
+      "Result": {
+        "motivo": "EXPIRADO",
+        "statusAtual": "AGUARDANDO_PAGAMENTO"
+      },
+      "ResultPath": "$.cancelamento",
+      "Next": "CancelarCodigoPagamento"
+    },
+    "MotivoFalhaEmissao": {
+      "Type": "Pass",
+      "Result": {
+        "motivo": "FALHA_SISTEMICA",
+        "statusAtual": "RESERVADO"
+      },
+      "ResultPath": "$.cancelamento",
+      "Next": "LiberarVeiculoCancelamento"
+    },
+    "CancelarCodigoPagamento": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${fn_pagamentos_worker_arn}",
+        "Payload": {
+          "acao": "CANCELAR_CODIGO",
+          "pagamentoId.$": "$.pagamento.pagamentoId",
+          "motivo.$": "$.cancelamento.motivo"
+        }
+      },
+      "TimeoutSeconds": 60,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "Erro.Transitorio",
+            "DependenciaIndisponivel"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 6,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "FalhaCompensacao"
+        }
+      ],
+      "Next": "LiberarVeiculoCancelamento"
+    },
+    "LiberarVeiculoCancelamento": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${fn_veiculos_worker_arn}",
+        "Payload": {
+          "acao": "LIBERAR_VEICULO",
+          "vendaId.$": "$.vendaId",
+          "veiculoId.$": "$.veiculoId"
+        }
+      },
+      "TimeoutSeconds": 60,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "Erro.Transitorio",
+            "DependenciaIndisponivel"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 6,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "FalhaCompensacao"
+        }
+      ],
+      "Next": "CancelarVenda"
+    },
+    "CancelarVenda": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${fn_vendas_worker_arn}",
+        "Payload": {
+          "acao": "ATUALIZAR_VENDA",
+          "vendaId.$": "$.vendaId",
+          "de.$": "$.cancelamento.statusAtual",
+          "para": "CANCELADO",
+          "motivo.$": "$.cancelamento.motivo",
+          "ator": "SISTEMA"
+        }
+      },
+      "TimeoutSeconds": 60,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "Erro.Transitorio",
+            "DependenciaIndisponivel"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 6,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "FalhaCompensacao"
+        }
+      ],
+      "Next": "LiberarLockCancelada"
+    },
+    "LiberarLockCancelada": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${fn_vendas_worker_arn}",
+        "Payload": {
+          "acao": "LIBERAR_LOCK",
+          "vendaId.$": "$.vendaId",
+          "clienteId.$": "$.clienteId"
+        }
+      },
+      "TimeoutSeconds": 60,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "Erro.Transitorio",
+            "DependenciaIndisponivel"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 6,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "FalhaCompensacao"
+        }
+      ],
+      "Next": "PublicarVendaCancelada"
+    },
+    "PublicarVendaCancelada": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "${topico_eventos_arn}",
+        "Message": {
+          "versaoEvento": 1,
+          "tipo": "VendaCancelada",
+          "ocorridoEm.$": "$$.State.EnteredTime",
+          "correlationId.$": "$.correlationId",
+          "vendaId.$": "$.vendaId",
+          "clienteId.$": "$.clienteId",
+          "veiculoId.$": "$.veiculoId",
+          "motivo.$": "$.cancelamento.motivo"
+        },
+        "MessageAttributes": {
+          "tipo": {
+            "DataType": "String",
+            "StringValue": "VendaCancelada"
+          }
+        }
+      },
+      "ResultPath": null,
+      "TimeoutSeconds": 30,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "Erro.Transitorio",
+            "DependenciaIndisponivel"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 6,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "FalhaCompensacao"
+        }
+      ],
+      "Next": "Cancelado"
+    },
+    "Cancelado": {
+      "Type": "Succeed"
+    },
+    "MotivoDesistenciaPosPago": {
+      "Type": "Pass",
+      "Result": {
+        "motivo": "DESISTENCIA",
+        "statusAtual": "PAGO"
+      },
+      "ResultPath": "$.cancelamento",
+      "Next": "EstornarPagamento"
+    },
+    "MotivoNaoRetirado": {
+      "Type": "Pass",
+      "Result": {
+        "motivo": "NAO_RETIRADO",
+        "statusAtual": "PAGO"
+      },
+      "ResultPath": "$.cancelamento",
+      "Next": "EstornarPagamento"
+    },
+    "MotivoErroPosPagamento": {
+      "Type": "Pass",
+      "Result": {
+        "motivo": "FALHA_SISTEMICA",
+        "statusAtual": "PAGO"
+      },
+      "ResultPath": "$.cancelamento",
+      "Next": "EstornarPagamento"
+    },
+    "EstornarPagamento": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${fn_pagamentos_worker_arn}",
+        "Payload": {
+          "acao": "ESTORNAR",
+          "pagamentoId.$": "$.pagamento.pagamentoId"
+        }
+      },
+      "TimeoutSeconds": 60,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "Erro.Transitorio",
+            "DependenciaIndisponivel"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 6,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "FalhaCompensacao"
+        }
+      ],
+      "Next": "LiberarVeiculoEstorno"
+    },
+    "LiberarVeiculoEstorno": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${fn_veiculos_worker_arn}",
+        "Payload": {
+          "acao": "LIBERAR_VEICULO",
+          "vendaId.$": "$.vendaId",
+          "veiculoId.$": "$.veiculoId"
+        }
+      },
+      "TimeoutSeconds": 60,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "Erro.Transitorio",
+            "DependenciaIndisponivel"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 6,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "FalhaCompensacao"
+        }
+      ],
+      "Next": "EstornarVenda"
+    },
+    "EstornarVenda": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${fn_vendas_worker_arn}",
+        "Payload": {
+          "acao": "ATUALIZAR_VENDA",
+          "vendaId.$": "$.vendaId",
+          "de": "PAGO",
+          "para": "ESTORNADO",
+          "motivo.$": "$.cancelamento.motivo",
+          "ator": "SISTEMA"
+        }
+      },
+      "TimeoutSeconds": 60,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "Erro.Transitorio",
+            "DependenciaIndisponivel"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 6,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "FalhaCompensacao"
+        }
+      ],
+      "Next": "LiberarLockEstornada"
+    },
+    "LiberarLockEstornada": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${fn_vendas_worker_arn}",
+        "Payload": {
+          "acao": "LIBERAR_LOCK",
+          "vendaId.$": "$.vendaId",
+          "clienteId.$": "$.clienteId"
+        }
+      },
+      "TimeoutSeconds": 60,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "Erro.Transitorio",
+            "DependenciaIndisponivel"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 6,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "FalhaCompensacao"
+        }
+      ],
+      "Next": "PublicarVendaEstornada"
+    },
+    "PublicarVendaEstornada": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "${topico_eventos_arn}",
+        "Message": {
+          "versaoEvento": 1,
+          "tipo": "VendaEstornada",
+          "ocorridoEm.$": "$$.State.EnteredTime",
+          "correlationId.$": "$.correlationId",
+          "vendaId.$": "$.vendaId",
+          "clienteId.$": "$.clienteId",
+          "veiculoId.$": "$.veiculoId",
+          "motivo.$": "$.cancelamento.motivo"
+        },
+        "MessageAttributes": {
+          "tipo": {
+            "DataType": "String",
+            "StringValue": "VendaEstornada"
+          }
+        }
+      },
+      "ResultPath": null,
+      "TimeoutSeconds": 30,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "Erro.Transitorio",
+            "DependenciaIndisponivel"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 6,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "FalhaCompensacao"
+        }
+      ],
+      "Next": "Estornado"
+    },
+    "Estornado": {
+      "Type": "Succeed"
+    },
+    "FalhaCompensacao": {
+      "Type": "Fail",
+      "Error": "FalhaCompensacao",
+      "Cause": "Falha em passo da saga apos retries; use POST /administracao/vendas/{id}/fluxo/reprocessamento"
+    },
+    "ResolverRetirada": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${fn_vendas_worker_arn}",
+        "Payload": {
+          "acao": "RESOLVER_RETIRADA",
+          "vendaId.$": "$.vendaId"
+        }
+      },
+      "TimeoutSeconds": 60,
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException",
+            "Erro.Transitorio",
+            "DependenciaIndisponivel"
+          ],
+          "IntervalSeconds": 2,
+          "BackoffRate": 2,
+          "MaxAttempts": 6,
+          "JitterStrategy": "FULL"
+        }
+      ],
+      "ResultPath": "$.resolucaoRetirada",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "ResultPath": "$.erro",
+          "Next": "FalhaCompensacao"
+        }
+      ],
+      "Next": "RetiradaRegistrada",
+      "ResultSelector": {
+        "registrada.$": "$.Payload.retiradaRegistrada"
+      }
+    },
+    "RetiradaRegistrada": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.resolucaoRetirada.registrada",
+          "BooleanEquals": true,
+          "Next": "BaixarVeiculo"
+        }
+      ],
+      "Default": "MotivoNaoRetirado"
+    }
+  }
+}
