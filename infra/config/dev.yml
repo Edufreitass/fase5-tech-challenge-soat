@@ -1,6 +1,6 @@
 ambiente: dev
 regiao: us-east-1
-destroy: true
+destroy: false
 
 negocio:
   prazo_pagamento_segundos: 172800
