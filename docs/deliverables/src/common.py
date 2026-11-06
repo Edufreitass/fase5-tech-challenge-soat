@@ -4,7 +4,7 @@ DIAG = HERE.parent.parent / "diagrams"
 DATA = "05/11/2026"
 REPO = "github.com/Edufreitass/fase5-tech-challenge-soat"
 NOTA = ("Esta entrega descreve código e infraestrutura declarada. <code>infra/config/dev.yml</code> contém "
-        "<code>destroy: true</code>: não há implantação ativa. Testes locais não comprovam latência, custos, "
+        "<code>destroy: true</code>: o ambiente foi implantado e validado em 05/11/2026 e depois removido, e não há implantação ativa. Testes locais não comprovam latência, custos, "
         "achados de segurança ou comportamento E2E na AWS.")
 def page(titulo, corpo):
     return (f'<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>{titulo}</title>'
