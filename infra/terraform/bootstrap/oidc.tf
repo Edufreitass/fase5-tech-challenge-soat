@@ -245,7 +245,7 @@ data "aws_iam_policy_document" "deploy_observabilidade_e_estado" {
   }
   statement {
     sid       = "CloudWatchListagens"
-    actions   = ["cloudwatch:DescribeAlarms", "cloudwatch:ListDashboards", "cloudwatch:ListMetrics"]
+    actions   = ["cloudwatch:DescribeAlarms", "cloudwatch:ListDashboards", "cloudwatch:ListMetrics", "cloudwatch:GetMetricData"]
     resources = ["*"]
     condition {
       test     = "StringEqualsIfExists"
